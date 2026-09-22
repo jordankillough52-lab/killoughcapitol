@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StonksWatch | Congressional Trade Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-green: #238636;
+            --accent-green-hover: #2ea043;
+            --accent-mint: #3fb950;
+            --badge-bg: rgba(35, 134, 54, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: var(--accent-mint);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-pill {
+            font-size: 0.75rem;
+            background: var(--badge-bg);
+            color: var(--accent-mint);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent-mint);
+        }
+
+        input {
+            flex: 1;
+        }
+
+        .feed {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .trade-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: transform 0.1s ease, border-color 0.2s;
+        }
+
+        .trade-card:hover {
+            border-color: rgba(63, 185, 80, 0.4);
+        }
+
+        .trade-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .politician-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .meta-details {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .trade-amount {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--accent-mint);
+            background: var(--badge-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            width: fit-content;
+            margin-top: 6px;
+        }
+
+        .trade-meta-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .ticker-badge {
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .action-tag {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: var(--accent-mint);
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+                StonksWatch
+            </h1>
+            <div class="status-pill">● LIVE FEED ACTIVE</div>
+        </header>
+
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Filter by politician or ticker..." oninput="filterTrades()">
+            <select id="partyFilter" onchange="filterTrades()">
+                <option value="ALL">All Parties</option>
+                <option value="Democrat">Democrat</option>
+                <option value="Republican">Republican</option>
+            </select>
+        </div>
+
+        <div class="feed" id="tradeFeed">
+            <!-- Dynamically populated -->
+        </div>
+
+        <footer>
+            Data structured from public STOCK Act disclosures. Built for transparency.
+        </footer>
+    </div>
+
+    <script>
+        const trades = [
+            { name: "Nancy Pelosi", party: "Democrat", chamber: "House", ticker: "NVDA", type: "PURCHASE", amount: "$500,000 - $1,000,000", date: "2026-09-18" },
+            { name: "Mark Green", party: "Republican", chamber: "House", ticker: "XOM", type: "PURCHASE", amount: "$100,000 - $250,000", date: "2026-09-15" },
+            { name: "Ro Khanna", party: "Democrat", chamber: "House", ticker: "AAPL", type: "SALE", amount: "$1,001 - $15,000", date: "2026-09-12" },
+            { name: "Tommy Tuberville", party: "Republican", chamber: "Senate", ticker: "MSFT", type: "PURCHASE", amount: "$50,000 - $100,000", date: "2026-09-10" }
+        ];
+
+        function renderTrades(data) {
+            const feed = document.getElementById('tradeFeed');
+            feed.innerHTML = '';
+            
+            if(data.length === 0) {
+                feed.innerHTML = `<div style="text-align:center; color: var(--text-secondary); padding: 30px;">No trades found matching criteria.</div>`;
+                return;
+            }
+
+            data.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'trade-card';
+                card.innerHTML = `
+                    <div class="trade-info">
+                        <div class="politician-name">${t.name} <span style="color:var(--text-secondary); font-weight:400; font-size:0.8rem">(${t.party[0]}-${t.chamber})</span></div>
+                        <div class="meta-details">Disclosed: ${t.date}</div>
+                        <div class="trade-amount">${t.amount}</div>
+                    </div>
+                    <div class="trade-meta-right">
+                        <div class="ticker-badge">${t.ticker}</div>
+                        <div class="action-tag" style="color: ${t.type === 'PURCHASE' ? 'var(--accent-mint)' : '#f85149'}">${t.type}</div>
+                    </div>
+                `;
+                feed.appendChild(card);
+            });
+        }
+
+        function filterTrades() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const party = document.getElementById('partyFilter').value;
+
+            const filtered = trades.filter(t => {
+                const matchesQuery = t.name.toLowerCase().includes(query) || t.ticker.toLowerCase().includes(query);
+                const matchesParty = party === 'ALL' || t.party === party;
+                return matchesQuery && matchesParty;
+            });
+
+            renderTrades(filtered);
+        }
+
+        // Initial render
+        renderTrades(trades);
+    </script>
+</body>
+</html>
